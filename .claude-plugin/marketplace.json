@@ -1,0 +1,18 @@
+{
+  "name": "greenfield-pipeline-local",
+  "owner": {
+    "name": "greenfield-pipeline"
+  },
+  "plugins": [
+    {
+      "name": "greenfield-pipeline",
+      "source": "./",
+      "description": "Deliver software from literal scratch."
+    },
+    {
+      "name": "pitch",
+      "source": "./pitch",
+      "description": "Take a foggy software idea to a won deal, then hand it to greenfield-pipeline."
+    }
+  ]
+}

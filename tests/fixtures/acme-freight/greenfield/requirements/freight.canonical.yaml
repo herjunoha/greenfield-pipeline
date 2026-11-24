@@ -1,0 +1,71 @@
+project:
+  name: acme-freight
+  status: draft
+  objectives:
+    - Let staff get a freight price from a weight and a zone.
+  out_of_scope:
+    - Booking, invoicing, carrier selection.
+  assumptions: []
+  timeline: none stated
+  surfaces:
+    - {name: quote-cli, kind: cli, interface: usage.md}
+  glossary:
+    - {term: heavy tier, meaning: the tariff band for shipments over 100 kg, source: "tariff.md#tiers", confirmed: true}
+  data_classes: [financial]
+  regulated: []
+requirements:
+  - id: AC-1
+    statement: A quote follows the weight tariff.
+    acceptance: quote for 120 kg to zone A prints the heavy-tier price.
+    dimension: functional
+    surface: quote-cli
+    source: "tariff.md#tiers"
+  - id: AC-2
+    statement: Remote-zone shipments carry a surcharge.
+    acceptance: quote for the remote zone prints the zone A price plus the surcharge.
+    dimension: functional
+    surface: quote-cli
+    source: "brief.md#remote"
+  - id: AC-3
+    statement: Prices are rounded.
+    acceptance: quote prints a rounded price.
+    dimension: functional
+    surface: quote-cli
+    source: "brief.md#rounding"
+  - id: AC-4
+    statement: Dangerous goods go through ops.
+    acceptance: quote --dangerous prints a refusal naming ops and exits 3.
+    dimension: functional
+    surface: quote-cli
+    source: "brief.md#notes"
+examples:
+  - id: EX-1
+    rule: a shipment over 100 kg uses the heavy tier
+    given: {weight_kg: 120, zone: A}
+    expect: {price: 540}
+    source: sponsor-document
+    confirmed_by: sponsor
+    confirmed_on: "2026-11-13"
+    serves: [AC-1]
+  - id: EX-2
+    rule: the remote zone adds 15 percent
+    given: {weight_kg: 100, zone: remote}
+    expect: {price: 575}
+    source: sponsor-document
+    confirmed_by: sponsor
+    confirmed_on: "2026-11-13"
+    serves: [AC-2]
+  - id: EX-3
+    rule: a price is rounded up to the next whole number
+    given: {weight_kg: 10, zone: remote}
+    expect: {price: 58}
+    source: agent
+    serves: [AC-3]
+  - id: EX-4
+    rule: dangerous goods are refused and routed to ops
+    given: {weight_kg: 10, zone: A, dangerous: true}
+    expect: {refused: ops}
+    source: sponsor-confirmed
+    confirmed_by: sponsor
+    confirmed_on: "2026-11-13"
+    serves: [AC-4]

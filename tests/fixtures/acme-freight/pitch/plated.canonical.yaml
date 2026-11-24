@@ -1,0 +1,55 @@
+project:
+  name: acme-freight
+  status: draft
+  objectives:
+    - Staff can get a consistent freight price for any ordinary shipment in under a minute by the end of the pilot, measured by quote time and by disagreements between two staff on the same shipment. Baseline TBD. Target TBD.
+  out_of_scope:
+    - Booking, invoicing, carrier selection (not asked for).
+  assumptions:
+    - The tool runs on a staff laptop and never stores customer data (owner our solution architect).
+  timeline: none stated
+  surfaces:
+    - {name: quote-cli, kind: cli, interface: null}
+  glossary:
+    - {term: heavy tier, meaning: the tariff band for shipments over 100 kg, source: "solution-statement.md#Terms", confirmed: true}
+    - {term: remote zone, meaning: a delivery zone priced at the zone A price plus a surcharge, source: "solution-statement.md#Terms", confirmed: true}
+  data_classes: [financial]
+  regulated: []
+requirements:
+  - id: AC-1
+    statement: The calculator MUST print the heavy-tier price for 120 kg to zone A.
+    acceptance: the observer sees 540.
+    dimension: functional
+    surface: quote-cli
+    source: "solution-statement.md#E1 Quote calculator"
+  - id: AC-2
+    statement: The calculator MUST refuse a dangerous shipment and name ops.
+    acceptance: the observer sees a refusal that says ops.
+    dimension: functional
+    surface: quote-cli
+    source: "solution-statement.md#E2 Dangerous-goods refusal"
+examples:
+  - id: EX-1
+    rule: R1 Weight tariff
+    given: {weight_kg: 120, zone: A}
+    expect: {price: 540}
+    source: sponsor-confirmed
+    confirmed_by: sponsor
+    confirmed_on: "2026-11-10"
+    serves: [AC-1]
+  - id: EX-2
+    rule: R2 Round up
+    given: {weight_kg: 10, zone: remote}
+    expect: {price: 58}
+    source: sponsor-confirmed
+    confirmed_by: sponsor
+    confirmed_on: "2026-11-10"
+    serves: [AC-1]
+  - id: EX-3
+    rule: R3 Dangerous goods
+    given: {weight_kg: 10, zone: A, dangerous: true}
+    expect: {refused: ops}
+    source: sponsor-confirmed
+    confirmed_by: sponsor
+    confirmed_on: "2026-11-10"
+    serves: [AC-2]

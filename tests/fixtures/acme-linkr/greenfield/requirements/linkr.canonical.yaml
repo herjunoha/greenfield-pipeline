@@ -1,0 +1,85 @@
+project:
+  name: acme-linkr
+  status: draft
+  objectives:
+    - Let anyone with an API key shorten a web address and let visitors follow the short link.
+  out_of_scope:
+    - Accounts, billing, link expiry, analytics beyond a visit count.
+  assumptions: []
+  timeline: none stated
+  surfaces:
+    - {name: linkr-api, kind: http, interface: links.yaml}
+    - {name: linkr-cli, kind: cli, interface: null}
+  glossary:
+    - {term: short code, meaning: the 6-character tail of a short link, source: "brief.md#terms", confirmed: true}
+    - {term: visit, meaning: one redirect served for a code, source: "brief.md#terms", confirmed: true}
+  data_classes: [personal]
+  regulated: []
+requirements:
+  - id: AC-1
+    statement: A caller with an API key can create a short link from a web address.
+    acceptance: POST /links with a valid https address answers 201 and a 6-character short code.
+    dimension: functional
+    surface: linkr-api
+    source: "brief.md#create"
+  - id: AC-2
+    statement: A visitor who opens a short link is redirected to the original address.
+    acceptance: GET /<code> for an existing code answers 302 with the original address in Location.
+    dimension: functional
+    surface: linkr-api
+    source: "brief.md#redirect"
+  - id: AC-3
+    statement: A code that does not exist answers not found.
+    acceptance: GET /<code> for a code that does not exist answers 404.
+    dimension: functional
+    surface: linkr-api
+    source: "brief.md#unknown"
+  - id: AC-4
+    statement: Only http and https addresses are accepted.
+    acceptance: POST /links with a javascript address answers 400 and stores nothing.
+    dimension: security
+    surface: linkr-api
+    source: "brief.md#schemes"
+  - id: AC-5
+    statement: Creating a link needs an API key.
+    acceptance: POST /links without an API key answers 401.
+    dimension: security
+    surface: linkr-api
+    source: "brief.md#auth"
+    baseline: authentication
+  - id: AC-6
+    statement: Redirects are fast under light load.
+    acceptance: 95 percent of redirects answer within 200 ms at 20 requests per second.
+    dimension: performance
+    surface: linkr-api
+    source: "brief.md#speed"
+    baseline: rough_load
+  - id: AC-7
+    statement: The command line creates a short link.
+    acceptance: linkr create <address> prints the short code and exits 0.
+    dimension: functional
+    surface: linkr-cli
+    source: "brief.md#cli"
+  - id: AC-8
+    statement: The command line shows how many visits a code has had.
+    acceptance: linkr stats <code> prints the visit count.
+    dimension: functional
+    surface: linkr-cli
+    source: "brief.md#cli"
+examples:
+  - id: EX-1
+    rule: an address with the javascript scheme is refused
+    given: {url: "javascript:alert(1)"}
+    expect: {status: 400}
+    source: sponsor-document
+    confirmed_by: sponsor
+    confirmed_on: "2026-11-13"
+    serves: [AC-4]
+  - id: EX-2
+    rule: a code opened twice has two visits
+    given: {opened: 2}
+    expect: {visits: 2}
+    source: sponsor-confirmed
+    confirmed_by: sponsor
+    confirmed_on: "2026-11-13"
+    serves: [AC-8]

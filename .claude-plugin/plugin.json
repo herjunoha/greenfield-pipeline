@@ -1,0 +1,9 @@
+{
+  "name": "greenfield-pipeline",
+  "version": "0.1.0",
+  "description": "A company-agnostic plugin that delivers software from literal scratch. Steps 1 to 8 of 9: the gp core, the fence, the generic pack, the case model and scorer, the canonical and its audit, environments and builds, the workers and skills, handover and the pack, the ladder and the ceiling, catch-up and retro, three fixtures.",
+  "hooks": "./hooks/hooks.json",
+  "author": {
+    "name": "Herjuno Hestu Adhimarta"
+  }
+}

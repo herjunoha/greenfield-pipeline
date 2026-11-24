@@ -1,0 +1,49 @@
+project:
+  name: acme-csv
+  status: draft
+  objectives:
+    - Turn a CSV file into a JSON summary from the command line.
+  out_of_scope:
+    - Any network use, any file format other than CSV.
+  assumptions: []
+  timeline: none stated
+  surfaces:
+    - {name: csvsum-cli, kind: cli, interface: usage.md}
+  glossary:
+    - {term: summary, meaning: the JSON file of row count and column sums, source: "brief.md#summary", confirmed: true}
+  data_classes: [none]
+  regulated: []
+requirements:
+  - id: AC-1
+    statement: The tool writes a summary of a CSV file.
+    acceptance: summarize writes summary.json with the row count and the sum of each numeric column, and exits 0.
+    dimension: functional
+    surface: csvsum-cli
+    source: "brief.md#summary"
+  - id: AC-2
+    statement: A missing input file is reported and nothing is written.
+    acceptance: summarize on a file that does not exist exits 2, says so on stderr and writes no output file.
+    dimension: functional
+    surface: csvsum-cli
+    source: "brief.md#missing"
+  - id: AC-3
+    statement: A header-only file summarises to zero rows.
+    acceptance: summarize on a header-only file writes rows 0 and every numeric column sum 0.
+    dimension: functional
+    surface: csvsum-cli
+    source: "brief.md#empty"
+  - id: AC-4
+    statement: A 5000-row file is summarised quickly.
+    acceptance: summarize on a 5000-row file finishes in under 2000 ms.
+    dimension: performance
+    surface: csvsum-cli
+    source: "brief.md#speed"
+examples:
+  - id: EX-1
+    rule: two rows of two numeric columns sum column by column
+    given: {csv: "a,b\n1,2\n3,4\n"}
+    expect: {rows: 2, sums: {a: 4, b: 6}}
+    source: sponsor-confirmed
+    confirmed_by: sponsor
+    confirmed_on: "2026-11-13"
+    serves: [AC-1]

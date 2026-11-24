@@ -1,0 +1,14 @@
+# The bundled generic pack. Complete on its own: drivers http, cli, manual; markdown documents; stdout notices.
+name: generic
+company: null
+language: en
+roles:
+  owner: owner
+  sponsor: sponsor
+own_terms: []
+redact: []
+brand: null
+stack: {}          # a field left out means "ask" through the stack brief, never a default of ours
+policy:
+  licenses: [MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, MPL-2.0]
+documents: {}

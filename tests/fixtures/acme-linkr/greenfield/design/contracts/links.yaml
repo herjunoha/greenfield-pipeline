@@ -1,0 +1,15 @@
+openapi: 3.0.3
+info: {title: acme-linkr, version: "1"}
+paths:
+  /links:
+    post:
+      requestBody: {content: {application/json: {schema: {type: object, required: [url], properties: {url: {type: string}}}}}}
+      responses:
+        "201": {description: created, content: {application/json: {schema: {type: object, required: [code], properties: {code: {type: string, pattern: "^[a-z0-9]{6}$"}}}}}}
+        "400": {description: refused address}
+        "401": {description: missing API key}
+  /{code}:
+    get:
+      responses:
+        "302": {description: redirect, headers: {Location: {schema: {type: string}}}}
+        "404": {description: unknown code}

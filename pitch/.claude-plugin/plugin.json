@@ -1,0 +1,8 @@
+{
+  "name": "pitch",
+  "version": "0.1.0",
+  "description": "A company-agnostic plugin that takes a foggy software idea to a won deal: chart a map of decision tickets, compile a traceable Solution Statement, draft the proposal and pitch deck from it, build an optional proof-of-concept demo, and hand a won deal to greenfield-pipeline. Needs greenfield-pipeline (its gp command and fence).",
+  "author": {
+    "name": "Herjuno Hestu Adhimarta"
+  }
+}
