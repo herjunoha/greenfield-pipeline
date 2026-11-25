@@ -1,10 +1,10 @@
 # greenfield-pipeline
 
-A company-agnostic plugin for Claude Code that delivers software from literal scratch: requirements, test suites written
-and reviewed before the build, a staged build, a verified run and a handover pack, driven by the `gp` command line and a
-set of worker agents.
+A company-agnostic plugin for Claude Code that takes a software idea from scattered sources to a verified build and a
+handover pack. It assumes no company, industry or stack. It ships as a command-line engine (`gp`), nine skills, six
+worker agents with limited tools, and a hook that pauses risky tool calls until the owner decides.
 
-**Explainer page: https://herjunoha.github.io/greenfield-pipeline/** (source: `docs/index.html`).
+**Explainer page:** linked as this repository's website on GitHub (source: `docs/index.html`).
 
 **License: Apache-2.0.** Copyright 2026 Herjuno Hestu Adhimarta, Quality Assurance. See `LICENSE`.
 
@@ -12,65 +12,52 @@ set of worker agents.
 session has yet driven the workers end to end: the scratch runs use each fixture's reference implementation in ed's
 place and the test author's suites as data. The behavioural half of the hidden-rule check has not been run.**
 
+## The whole idea
+
+Six rules.
+
+1. **One tracker, one state.** Asks, findings, failed runs and work are all items, each a file in one of five states:
+   needs-triage, needs-info, ready-for-agent, ready-for-human, closed. The agent works the ones it can do alone
+   (`gp next`).
+2. **Red before green.** Every acceptance criterion (AC) gets a test suite before any code exists, and the suite is
+   seen failing before the build. An AC is done only on a passing full run of its accepted suite, on the current build.
+3. **The writer never judges.** `gus` writes the suites and never reads product code. `ed` builds and never edits a
+   suite. `tim` judges the run blind to the builder's notes. `rex` reviews every suite version and every full run,
+   whatever its result.
+4. **People confirm the examples.** Expected values come from examples a person confirmed. An open assumption keeps an
+   AC from being done, and a guess from memory never closes one.
+5. **One-way doors are the owner's.** A hook pauses a fixed list of risky tool calls. Accepting a suite, accepting a
+   pack change and issuing numbers are the owner's, and so is how much of each part runs unattended. Nothing goes to
+   production.
+6. **Every handover says what stayed unproven.** The pack includes a limits page: what no suite checked, which doubles
+   stood in for real services, which assumptions are open. The certificate is left unsigned.
+
+Not goals: production deploy or operations, inventing requirements (it asks), a no-human mode, any compliance claim,
+and mobile, desktop or embedded testing out of the box.
+
+## The loop for one AC
+
+1. **Plate.** Scattered sources become one canonical requirement file. What it cannot settle is raised as an item for a
+   person.
+2. **Shape.** Architecture and interface contracts are written and the stack is decided, before any code.
+3. **Design.** `gus` writes the suite for the AC, tracer case first. `rex` reviews it and the owner accepts that version.
+4. **Red.** The suite runs before any build and must fail.
+5. **Build.** `ed` builds test-first, one AC at a time, on a recorded commit.
+6. **Verify.** `eve` runs the suites, `tim` judges, `gp score` combines, `rex` reviews the run. Failures go back to build.
+7. **Handover.** `dora` drafts the sponsor documents as local files. The owner signs and sends.
+
+## Who decides
+
+- **The agent alone:** write and review suites, build, run, judge, score, draft handover documents.
+- **The owner only:** accept a suite version (`gp accept-line`), accept a change to the pack (`gp pack accept`), issue
+  numbers (`gp number`), sign and send the certificate, anything on the always-pause list, and the ladder: which parts
+  wait for the owner and which may run on their own.
+
 ## Also in this repository: `pitch`
 
 A second plugin, `pitch/`, takes a foggy idea to a won deal (map of decision tickets, Solution Statement, proposal,
 deck, optional demo) and hands the win to this plugin's `plate`. It needs this plugin's `gp` and fence. Marketplace
 entries: `greenfield-pipeline` and `pitch`. Its status is its own: see `pitch/README.md` (fixture only).
-
-## What exists
-
-- `gp` core: `init`, `new`, `next`, `status`, `close`, `decide`, `doctor`, `pack show|check|accept` (`show` also reads `<key>.md` in the pack, such as `lessons` or `offerings`), `check`, `run`,
-  `score`, `acs`, `raise`, `preflight`, `build`, `product init`, `accept-line`, `review`, `quickstart`,
-  `handover-data`, `handover`, `feed`, `notify`, `number`, `level`, `budget`, `catchup`, `retro`.
-- **Case model and scorer.** Suite schema, the path language, thirteen ops, a small JSON Schema subset. Mechanical
-  refusals: no scored check without `from`, no `example:` that is not confirmed, no scored case with nothing to
-  check, no unsupported schema keyword. A driver failure is `error`, never `fail`. A step may use an earlier
-  observation with `{{0.body.code}}`.
-- **Drivers** (stdlib only): `http`, `cli`, `manual`, one command per case, JSON in and out.
-- **Canonical and plate.** Full schema (surfaces, glossary, examples, data classes, regulated regimes), the audit,
-  the `plate` skill. `gp acs` lists each AC with the shas a suite copies, reports orphans, and says what stops each
-  AC from being `done`. A suite whose AC or contract changed is stale and refused.
-- **Assumptions and regulated data.** An assumption's `source` is its tag; `memory` and an unconfirmed `public:`
-  finding never close one, and an AC with an open assumption shows `assumed`. `gp raise` mints the regulated-data
-  item and one stub per unspecified baseline need.
-- **Environments and builds.** `environments.yaml` (production is never listed; a local one is loopback; a remote one
-  is in the fence's `remote_hosts`), `gp preflight`, a `reset` between cases, credential names checked and never
-  values. `gp build` records a clean HEAD. `gp check` blocks a dirty tree or build, a manifest with no lockfile, a
-  secret in a committed file, an undocumented dependency, and (`--merge`) a ref with no passing full run on exactly
-  its commit.
-- **The AC state machine.** `no-suite`, `in-review`, `ready`, `red`, `green`, `done`, `assumed`, `stale`, derived
-  from files. `done` needs an accepted suite (rex reviewed, owner accepted at the file's sha), a full run of exactly
-  that suite on the current build, rex's review of that run, red seen before the first green, an approved baseline
-  and no open assumption.
-- **Workers and skills.** `gus`, `rex`, `ed`, `eve`, `tim`, `dora` (agents with tool limits); skills `deliver`,
-  `plate`, `shape`, `design`, `build`, `verify`, `handover`. A test checks that every `gp` command they name exists.
-- **Handover.** Eight generic markdown documents from `gp handover-data`, including the limits page (what stayed
-  unproven, doubles, open assumptions, "compliance: not assessed by this pipeline"). The certificate is left
-  unsigned. `gp handover` refuses while a regulated-data item is open. `gp quickstart` runs the README's commands
-  in a fresh clone of the build and checks health.
-- **The pack.** `gp pack check` validates it and rejects any rule that loosens the core fence; the fence takes the
-  union. The pack's hash is recorded in `fence.yaml`; an edited pack file makes every non-read tool call ask until the
-  owner runs `gp pack accept`. Feeds are redacted (phone numbers, emails, tokens, the pack's patterns) before any
-  file is written.
-- **The fence.** All eleven always-pause entries, enforced by a tool-call hook in any project that has
-  `greenfield/fence.yaml`, and silent everywhere else. It also asks before `gp accept-line`, `gp pack accept` and
-  `gp number`, because accepting and issuing are the owner's.
-- **The ladder.** Per part (`plate`, `probe`, `shape`, `design`, `build`, `verify`, `handover`): `hitl` makes its
-  items wait for the owner and be worked live, `afk` is the default. It is the owner's: a permanent map in
-  `fence.yaml`, or a spoken change for one session (logged). A spoken change cannot loosen a permanent `hitl`;
-  `unattended` is specified, not built, and counts as `hitl`. No level reaches the fence.
-- **The ceiling.** `budget:` in `fence.yaml`: full runs with no newly passing case on one AC, builds, a deadline.
-  Reaching one raises a `ready-for-human` item, and `gp run` or `gp build` then refuse. Token or cost spend is not
-  visible to the plugin; set that limit in your own harness or plan.
-- **Catch-up and retro.** `gp catchup` (what waits, decisions since last time, Attention flags) and a session-start
-  line of pointers. `gp retro begin|finish` refuses if the pack grew, a file is over 30 lines or a lesson names a
-  specific; retro writes the pack and the project, and the fence asks before any write into the plugin.
-- **Three fixtures.** `acme-linkr` (http and cli), `acme-csv` (cli only, results from captured files) and
-  `acme-freight` (business rules and a hidden rule). Each scratch run goes skeleton, red on every AC, a reference
-  build, green, reviewed, done; the independence check plants a blind spot the builder's own tests miss and the
-  full run turns that AC red.
-- **Size budgets as tests.** Each module, skill, agent and driver has a line cap.
 
 ## What does not exist yet, and what is not proven
 
@@ -120,6 +107,11 @@ Claude Code session; the tests drive it by stdin.**
   fence diff. The container path has not been exercised on a machine with a runtime.
 - The fence is regex on command text and tool names. It is conservative and not a sandbox.
 - Secret matching is pattern-based and misses what it does not know.
+
+## Reference
+
+The full list of commands and mechanisms (case model and scorer, drivers, the pack, the fence, the ladder, the ceiling,
+handover) is in `docs/reference.md`.
 
 ## Credits
 
