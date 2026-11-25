@@ -3,9 +3,7 @@
 A company-agnostic plugin that delivers software from literal scratch. Design: `plan-delivery-plugin-agnostic.md`
 (kept outside this repo).
 
-**Terms: shared for review only, all rights reserved.**
-
-Creator: Herjuno Hestu Adhimarta, Quality Assurance. This is attribution only: it grants no rights and makes no claim about who holds them.
+**License: Apache-2.0.** Copyright 2026 Herjuno Hestu Adhimarta, Quality Assurance. See `LICENSE`.
 
 **Status: steps 1 to 8 of 9 built. Validated on fixtures only. No real project has run (step 9), and no live model
 session has yet driven the workers end to end: the scratch runs use each fixture's reference implementation in ed's
@@ -106,7 +104,7 @@ Claude Code session; the tests drive it by stdin.**
   `/plugin install greenfield-pipeline@greenfield-pipeline-local`. It adds the skills, the agents and the fence hook; a
   project is any folder where you have run `gp init`. If the hook does not load, the fence does not act, so check it
   before trusting a project to it.
-- **Terms:** shared for review only, all rights reserved. No license is granted (see `TERMS.md`).
+- **License:** Apache-2.0 (see `LICENSE`).
 
 ## Surface tiers and the limits of a green verdict
 

@@ -9,7 +9,7 @@ of war and one-ticket-at-a-time loop are kept; the issue tracker and claiming ar
 folder, and a traceability spine, a deal lens, a client loop, a deadline rule, a domain pass and a hand-off are
 added.
 
-Creator: Herjuno Hestu Adhimarta, Quality Assurance (attribution only). Terms: see `../TERMS.md`.
+Copyright 2026 Herjuno Hestu Adhimarta. License: Apache-2.0, see `../LICENSE`.
 
 **Status: version 0.1.0, validated on a fixture only (`acme-freight`, fictional).** The structure, the statement
 against its spec and the seam to `greenfield-pipeline` (a statement plated by the hand-off mapping passes `gp acs`
