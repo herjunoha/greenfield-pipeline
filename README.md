@@ -4,6 +4,8 @@ A company-agnostic plugin for Claude Code that delivers software from literal sc
 and reviewed before the build, a staged build, a verified run and a handover pack, driven by the `gp` command line and a
 set of worker agents.
 
+**Explainer page: https://herjunoha.github.io/greenfield-pipeline/** (source: `docs/index.html`).
+
 **License: Apache-2.0.** Copyright 2026 Herjuno Hestu Adhimarta, Quality Assurance. See `LICENSE`.
 
 **Status: steps 1 to 8 of 9 built. Validated on fixtures only. No real project has run (step 9), and no live model
