@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>greenfield-pipeline: tests first, a person at every gate</title>
+<link rel="icon" href="data:,">
+<meta name="description" content="How greenfield-pipeline works: a Claude Code plugin that takes a software idea from scattered sources to a verified build and a handover pack. Validated on fixtures only.">
+<style>
+/*
+  Design Read: technical explainer for developers and engineering leads deciding whether to read the repo,
+  plain English, route-line language, ENERGY 1 / RHYTHM 2 / MOTION 1.
+
+  Reasons, one line each:
+  - Palette: ink and paper neutrals, one route blue, one teal accent used only for "done" and the live state
+    button, one red used only for the "red" AC state. Red and teal carry meaning, they are not decoration.
+  - Type: system fonts. The page ships as one static file with no outside requests, so nothing loads from a third party.
+  - Route line: the pipeline is a sequence with stations. A vertical line with square nodes is the identity motif and
+    is used for the route only.
+  - Radius: 3px on blocks and buttons, 0 on the route nodes. One small radius, so buttons look like buttons.
+  - Shadow: none. Hierarchy comes from borders, size and whitespace.
+  - Motion: colour change on hover and focus only. Nothing moves on its own.
+  - Section layouts differ on purpose: route (line), states (track plus panel), workers (ruled list),
+    fence (prose with a side note), pitch (list beside a plain-text diagram), status (two columns).
+*/
+:root {
+  --paper: #f5f7fa;
+  --surface: #ffffff;
+  --ink: #16202c;
+  --ink-2: #4a5566;
+  --line: #ccd5e0;
+  --edge: #6b7a8e;
+  --route: #2358a6;
+  --route-bg: #e3ecf8;
+  --go: #0a6f64;
+  --go-bg: #daf1ed;
+  --red: #b3392b;
+  --red-bg: #f9e4e0;
+  --note-bg: #fbf0d9;
+  --note-ink: #6b4300;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #0f1824;
+    --surface: #162334;
+    --ink: #e7eef7;
+    --ink-2: #a8b6c7;
+    --line: #2b3d54;
+    --edge: #7189a6;
+    --route: #7fb0ee;
+    --route-bg: #1b3252;
+    --go: #4fd1bf;
+    --go-bg: #123c38;
+    --red: #f2897b;
+    --red-bg: #43211d;
+    --note-bg: #3a2d12;
+    --note-ink: #f0c77a;
+    color-scheme: dark;
+  }
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+}
+a { color: var(--route); text-underline-offset: 3px; }
+a:hover { color: var(--ink); }
+:focus-visible { outline: 3px solid var(--route); outline-offset: 2px; border-radius: 3px; }
+code, pre { font-family: var(--mono); font-size: 0.92em; }
+code { background: var(--route-bg); padding: 0.08em 0.35em; border-radius: 3px; overflow-wrap: anywhere; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 0 16px; }
+
+/* top bar */
+.bar { border-bottom: 1px solid var(--line); background: var(--surface); }
+.bar .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; padding-top: 10px; padding-bottom: 10px; }
+.bar strong { font-family: var(--mono); font-size: 0.95rem; margin-right: auto; }
+.bar nav { display: flex; flex-wrap: wrap; gap: 2px 4px; }
+.bar nav a { display: inline-block; padding: 10px 10px; min-height: 44px; color: var(--ink-2); text-decoration: none; font-size: 0.95rem; }
+.bar nav a:hover { color: var(--ink); background: var(--route-bg); border-radius: 3px; }
+
+/* hero */
+.hero { padding: 64px 0 40px; }
+.hero h1 { font-size: clamp(2.1rem, 6.4vw, 3.4rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 20px; max-width: 16ch; }
+.hero .lead { font-size: 1.2rem; max-width: 60ch; margin: 0 0 12px; color: var(--ink-2); }
+.hero .lead strong { color: var(--ink); font-weight: 600; }
+.notice { margin: 28px 0 0; padding: 14px 16px; background: var(--note-bg); color: var(--note-ink); border: 1px solid var(--note-ink); border-radius: 3px; max-width: 64ch; }
+.notice strong { display: block; margin-bottom: 2px; }
+
+section { padding: 44px 0; border-top: 1px solid var(--line); }
+section > .wrap > h2 { font-size: 1.7rem; letter-spacing: -0.01em; line-height: 1.2; margin: 0 0 8px; }
+.sub { color: var(--ink-2); max-width: 62ch; margin: 0 0 28px; }
+
+/* route */
+.route { list-style: none; margin: 0; padding: 0 0 0 28px; position: relative; }
+.route::before { content: ""; position: absolute; left: 7px; top: 8px; bottom: 8px; width: 2px; background: var(--route); }
+.route li { position: relative; padding: 0 0 26px; }
+.route li:last-child { padding-bottom: 0; }
+.route li::before { content: ""; position: absolute; left: -28px; top: 7px; width: 16px; height: 16px; background: var(--paper); border: 2px solid var(--route); }
+.route h3 { margin: 0 0 4px; font-family: var(--mono); font-size: 1.05rem; }
+.route h3 span { font-family: var(--sans); font-weight: 400; color: var(--ink-2); font-size: 0.95rem; margin-left: 8px; }
+.route p { margin: 0 0 4px; max-width: 62ch; }
+.route .who { color: var(--ink-2); font-size: 0.95rem; }
+.sidebar-note { margin-top: 28px; padding-top: 16px; border-top: 1px dashed var(--line); color: var(--ink-2); max-width: 66ch; }
+
+/* states */
+.track { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; padding: 0; list-style: none; }
+.state { font: inherit; font-family: var(--mono); font-size: 0.95rem; min-height: 44px; padding: 8px 14px; border: 1.5px solid var(--edge); background: var(--surface); color: var(--ink); border-radius: 3px; cursor: pointer; }
+.state:hover { border-color: var(--route); }
+.state[aria-pressed="true"] { background: var(--route-bg); border-color: var(--route); }
+.state[data-state="done"][aria-pressed="true"] { background: var(--go-bg); border-color: var(--go); }
+.state[data-state="red"][aria-pressed="true"] { background: var(--red-bg); border-color: var(--red); }
+.track-label { margin: 18px 0 8px; font-size: 0.95rem; color: var(--ink-2); }
+.panel { margin-top: 20px; padding: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 3px; min-height: 12rem; }
+.panel h3 { margin: 0 0 10px; font-family: var(--mono); font-size: 1.1rem; }
+.panel p { margin: 0 0 10px; max-width: 62ch; }
+.panel ul { margin: 0 0 10px; padding-left: 20px; max-width: 62ch; }
+.panel .next { margin: 0; color: var(--ink-2); }
+.state-panel { display: none; }
+.state-panel.on, .no-js .state-panel { display: block; }
+.no-js .state-panel + .state-panel { margin-top: 24px; padding-top: 20px; border-top: 1px dashed var(--line); }
+.no-js .track, .no-js .track-label { display: none; }
+
+/* workers */
+.workers { margin: 0; padding: 0; list-style: none; border-top: 2px solid var(--ink); }
+.workers li { display: grid; grid-template-columns: 11rem 1fr; gap: 4px 24px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.workers .nm { font-family: var(--mono); font-weight: 600; }
+.workers .nm small { display: block; font-family: var(--sans); font-weight: 400; color: var(--ink-2); font-size: 0.85rem; }
+.workers p { margin: 0 0 4px; }
+.workers .never { color: var(--ink-2); font-size: 0.95rem; }
+.workers .never b { color: var(--red); font-weight: 600; }
+@media (max-width: 620px) { .workers li { grid-template-columns: 1fr; } }
+
+/* fence */
+.cols { display: grid; grid-template-columns: 1.6fr 1fr; gap: 28px 40px; align-items: start; }
+@media (max-width: 720px) { .cols { grid-template-columns: 1fr; } }
+.cols p { margin: 0 0 14px; max-width: 60ch; }
+.aside { padding: 16px; border: 1px solid var(--line); background: var(--surface); border-radius: 3px; font-size: 0.96rem; }
+.aside h3 { margin: 0 0 8px; font-size: 1rem; }
+.aside p { margin: 0 0 10px; }
+.aside p:last-child { margin: 0; }
+
+/* pitch */
+.pitch { display: grid; grid-template-columns: 1fr 1fr; gap: 28px 36px; align-items: start; }
+@media (max-width: 720px) { .pitch { grid-template-columns: 1fr; } }
+.pitch ul { margin: 0; padding-left: 20px; }
+.pitch li { margin-bottom: 8px; }
+pre.flow { margin: 0; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 3px; overflow-x: auto; line-height: 1.5; max-width: 100%; }
+
+/* status */
+.status { display: grid; grid-template-columns: 1fr 1fr; gap: 28px 40px; }
+@media (max-width: 720px) { .status { grid-template-columns: 1fr; } }
+.status h3 { margin: 0 0 10px; font-size: 1.05rem; }
+.status ul { margin: 0; padding-left: 20px; }
+.status li { margin-bottom: 8px; }
+.status .proven h3 { color: var(--go); }
+.status .open h3 { color: var(--red); }
+
+/* try it */
+pre.cmd { margin: 0 0 16px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 3px; overflow-x: auto; line-height: 1.6; }
+.small { color: var(--ink-2); font-size: 0.95rem; max-width: 64ch; margin: 0 0 10px; }
+
+footer { border-top: 1px solid var(--line); padding: 28px 0 56px; color: var(--ink-2); font-size: 0.95rem; }
+footer p { margin: 0 0 8px; max-width: 70ch; }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap">
+    <strong>greenfield-pipeline</strong>
+    <nav aria-label="Sections">
+      <a href="#route">Route</a>
+      <a href="#states">States</a>
+      <a href="#workers">Workers</a>
+      <a href="#fence">Fence</a>
+      <a href="#pitch">Pitch</a>
+      <a href="#status">Status</a>
+      <a href="#try">Try it</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="hero">
+  <div class="wrap">
+    <h1>Tests first, a person at every gate.</h1>
+    <p class="lead"><strong>greenfield-pipeline</strong> is a plugin for Claude Code. It takes a software idea from scattered sources to a verified build and a handover pack, and it assumes no company, industry or stack.</p>
+    <p class="lead">It ships a command-line engine (<code>gp</code>), nine skills, six worker agents with limited tools, and a hook that pauses risky tool calls until the owner decides.</p>
+    <p class="notice"><strong>Status: validated on fixtures only.</strong> No real project has run through it, and no live model session has driven the workers end to end. <a href="#status">What is and is not proven</a>.</p>
+  </div>
+</div>
+
+<section id="route">
+  <div class="wrap">
+    <h2>The route</h2>
+    <p class="sub">One project moves through six parts. The <code>deliver</code> skill reads the project's files, picks the next unblocked item and runs the part it needs, until nothing is left or everything left waits on a person.</p>
+    <ol class="route">
+      <li>
+        <h3>plate <span>sources to a canonical requirement</span></h3>
+        <p>Briefs, notes and replies are plated into one file, <code>greenfield/requirements/&lt;name&gt;.canonical.yaml</code>: surfaces, glossary, confirmed examples, data classes, regulated regimes. The items it demands are raised for a person.</p>
+        <p class="who">Skill: <code>plate</code></p>
+      </li>
+      <li>
+        <h3>shape <span>design before any code</span></h3>
+        <p>An architecture note and interface contracts are written and the stack is decided, so there is a surface to test before anything is built.</p>
+        <p class="who">Skill: <code>shape</code>. Output: <code>design/architecture.md</code>, <code>design/contracts/</code></p>
+      </li>
+      <li>
+        <h3>design <span>one reviewed suite per acceptance criterion</span></h3>
+        <p>For each acceptance criterion (AC) a YAML suite is written, tracer case first, then clauses, negatives and edges. Every version waits for an independent review.</p>
+        <p class="who">Workers: <code>gus</code> writes, <code>rex</code> reviews</p>
+      </li>
+      <li>
+        <h3>build <span>test-first, one AC at a time</span></h3>
+        <p>The software is built in the declared product repo against a suite that has already been seen to fail. Each build is recorded against a clean commit.</p>
+        <p class="who">Worker: <code>ed</code></p>
+      </li>
+      <li>
+        <h3>verify <span>run, judge, score, review</span></h3>
+        <p>The suites run through drivers (<code>http</code>, <code>cli</code>, <code>manual</code>). Rule checks are judged against the transcript by someone who has not seen the builder's notes. <code>gp score</code> combines the judgments, and every full run gets a review, whatever its result.</p>
+        <p class="who">Workers: <code>eve</code> runs, <code>tim</code> judges, <code>rex</code> reviews</p>
+      </li>
+      <li>
+        <h3>handover <span>documents for the sponsor, drafted locally</span></h3>
+        <p>Eight markdown documents are generated from <code>gp handover-data</code>, including a limits page: what stayed unproven, which doubles stood in for real services, which assumptions are open. The certificate is left unsigned.</p>
+        <p class="who">Worker: <code>dora</code>. Never signs, sends or uploads.</p>
+      </li>
+    </ol>
+    <p class="sidebar-note">Two more skills sit beside the route. <code>catchup</code> lists what waits on the owner, decisions made since the last look, and the flags rex raised. <code>retro</code> proposes small changes to the project's pack and leaves it no larger than before; it never edits the plugin.</p>
+  </div>
+</section>
+
+<section id="states">
+  <div class="wrap">
+    <h2>Red before green</h2>
+    <p class="sub">Nothing is stored as "done". Each AC's state is derived from the project's files every time you ask (<code>gp acs</code>). Pick a state to see what it means and what moves an AC out of it.</p>
+
+    <p class="track-label" id="path-label">The path, in order</p>
+    <ul class="track" aria-labelledby="path-label">
+      <li><button class="state" data-state="no-suite" aria-pressed="false" type="button">no-suite</button></li>
+      <li><button class="state" data-state="in-review" aria-pressed="false" type="button">in-review</button></li>
+      <li><button class="state" data-state="ready" aria-pressed="false" type="button">ready</button></li>
+      <li><button class="state" data-state="red" aria-pressed="false" type="button">red</button></li>
+      <li><button class="state" data-state="green" aria-pressed="false" type="button">green</button></li>
+      <li><button class="state" data-state="done" aria-pressed="true" type="button">done</button></li>
+    </ul>
+    <p class="track-label" id="over-label">Two states override the path</p>
+    <ul class="track" aria-labelledby="over-label">
+      <li><button class="state" data-state="assumed" aria-pressed="false" type="button">assumed</button></li>
+      <li><button class="state" data-state="stale" aria-pressed="false" type="button">stale</button></li>
+    </ul>
+
+    <div class="panel" aria-live="polite">
+      <div class="state-panel" data-panel="no-suite">
+        <h3>no-suite</h3>
+        <p>The AC has no acceptance suite yet.</p>
+        <p class="next">Moves on when: the design part writes one, tracer case first.</p>
+      </div>
+      <div class="state-panel" data-panel="in-review">
+        <h3>in-review</h3>
+        <p>A suite exists, but one of two things is missing: rex has not approved this version of it, or the owner has not accepted it.</p>
+        <p class="next">Moves on when: rex approves the version and the owner accepts it at that file's hash.</p>
+      </div>
+      <div class="state-panel" data-panel="ready">
+        <h3>ready</h3>
+        <p>The suite is approved and accepted, and no run of that exact suite exists yet.</p>
+        <p class="next">Moves on when: the first run happens. That run is expected to fail, before the build exists.</p>
+      </div>
+      <div class="state-panel" data-panel="red">
+        <h3>red</h3>
+        <p>The latest run of this suite failed on this AC.</p>
+        <p class="next">Moves on when: the build part fixes it, records the build, and the suite runs again.</p>
+      </div>
+      <div class="state-panel" data-panel="green">
+        <h3>green</h3>
+        <p>The latest run passes, but <code>done</code> is still blocked by at least one of these:</p>
+        <ul>
+          <li>no full run of this suite yet</li>
+          <li>the latest full run is not a pass</li>
+          <li>the run is not on the current build</li>
+          <li>rex has not reviewed that run</li>
+          <li>the AC was never seen red before its first green</li>
+          <li>the baseline is not approved</li>
+        </ul>
+        <p class="next"><code>gp acs</code> names which of these is holding each AC.</p>
+      </div>
+      <div class="state-panel on" data-panel="done">
+        <h3>done</h3>
+        <p>Every condition holds at once:</p>
+        <ul>
+          <li>the suite is reviewed by rex and accepted by the owner at that file's hash</li>
+          <li>a full run of exactly that suite, on the current build, passes</li>
+          <li>rex has reviewed that run</li>
+          <li>the AC was seen red before its first green</li>
+          <li>the baseline is approved</li>
+          <li>no assumption is open</li>
+        </ul>
+        <p class="next">A green verdict means the accepted suites passed on one build. It does not prove quality outside what they check.</p>
+      </div>
+      <div class="state-panel" data-panel="assumed">
+        <h3>assumed</h3>
+        <p>An assumption on this AC is open. This state wins over every other one until the assumption is closed. An assumption's <code>source</code> is its tag, and a source of <code>memory</code>, or a public finding nobody confirmed, never closes one.</p>
+        <p class="next">Moves on when: a person confirms the assumption from a source that can close it.</p>
+      </div>
+      <div class="state-panel" data-panel="stale">
+        <h3>stale</h3>
+        <p>The AC, or a contract the suite copies from, changed after the suite was written. A stale suite is refused.</p>
+        <p class="next">Moves on when: the suite is rewritten and reviewed again.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="workers">
+  <div class="wrap">
+    <h2>Who may touch what</h2>
+    <p class="sub">The workers are separate agents with separate tool lists. The point is separation: the author of a suite never sees product code, the judge never sees the builder's notes, and the reviewer edits nothing.</p>
+    <ul class="workers">
+      <li>
+        <div class="nm">gus <small>the generator</small></div>
+        <div>
+          <p>Writes and edits one AC's suite from the contract, the canonical and the confirmed examples.</p>
+          <p class="never"><b>Never</b> reads product code. Each suite version waits for rex.</p>
+        </div>
+      </li>
+      <li>
+        <div class="nm">rex <small>the reviewer</small></div>
+        <div>
+          <p>Reviews every suite version, the shape, the diff of each item, and every full run whatever its result. Writes the Attention section of the evidence README.</p>
+          <p class="never"><b>Never</b> edits suites, code or results.</p>
+        </div>
+      </li>
+      <li>
+        <div class="nm">ed <small>the engineer</small></div>
+        <div>
+          <p>Builds test-first on branches of the declared product repo, records builds, fixes red ACs, and diagnoses runs that never reached the product.</p>
+          <p class="never"><b>Never</b> edits suites, and never merges to trunk without a verdict. Pushes and deploys only through a declared lane.</p>
+        </div>
+      </li>
+      <li>
+        <div class="nm">eve <small>the executor</small></div>
+        <div>
+          <p>Runs the reviewed suites through the drivers, records what came back, then scores.</p>
+          <p class="never"><b>Never</b> judges, edits or builds.</p>
+        </div>
+      </li>
+      <li>
+        <div class="nm">tim <small>the triager</small></div>
+        <div>
+          <p>Judges each case's rule checks against its transcript and writes a bug report for every failing case.</p>
+          <p class="never"><b>Blind</b> to the builder's notes.</p>
+        </div>
+      </li>
+      <li>
+        <div class="nm">dora <small>the doc author</small></div>
+        <div>
+          <p>Drafts the sponsor-facing handover documents as local files, in the pack's language and the roles' words.</p>
+          <p class="never"><b>Never</b> signs, sends or uploads.</p>
+        </div>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section id="fence">
+  <div class="wrap">
+    <h2>The fence and the ladder</h2>
+    <div class="cols">
+      <div>
+        <p><strong>The fence</strong> is a hook on tool calls. In any project that has <code>greenfield/fence.yaml</code> it enforces an always-pause list of eleven entries, and everywhere else it stays silent. It also asks before <code>gp accept-line</code>, <code>gp pack accept</code> and <code>gp number</code>, because accepting and issuing are the owner's.</p>
+        <p><strong>The pack</strong> holds the company-specific rules, so the core stays generic. Its hash is recorded in <code>fence.yaml</code>. If a pack file is edited, every non-read tool call asks until the owner runs <code>gp pack accept</code>. A pack rule that loosens the core fence is rejected; the fence takes the union.</p>
+        <p><strong>Environments</strong> are declared in <code>environments.yaml</code>. Production is never listed. A local one must be loopback, a remote one must be in the fence's <code>remote_hosts</code>, and credential names are checked but values never are.</p>
+        <p><strong>The ladder</strong> is the owner's dial for how much runs unattended, per part. <code>hitl</code> makes a part's items wait for the owner and be worked live; <code>afk</code> is the default. A spoken change lasts one session and is logged. It cannot loosen a permanent <code>hitl</code>, and no level ever reaches the fence.</p>
+        <p><strong>The ceiling</strong> is a <code>budget:</code> in <code>fence.yaml</code>: full runs with no newly passing case on one AC, builds, and a deadline. Reaching one raises a ready-for-human item and <code>gp run</code> and <code>gp build</code> refuse.</p>
+      </div>
+      <div class="aside">
+        <h3>What the fence is not</h3>
+        <p>It matches regular expressions on command text and tool names. It is conservative and it is not a sandbox.</p>
+        <p>Secret matching is pattern-based and misses what it does not know.</p>
+        <p>The hook has not yet been loaded by a live Claude Code session. The tests drive it by stdin, so check that it loads before trusting a project to it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="pitch">
+  <div class="wrap">
+    <h2>The second plugin: pitch</h2>
+    <p class="sub">The same repository holds <code>pitch</code>, which takes a foggy idea, often one discovery note or one sentence, to a won deal. It needs <code>gp</code> and the fence from this plugin, so every artifact is a draft by enforcement.</p>
+    <div class="pitch">
+      <div>
+        <ul>
+          <li><code>problem-to-solution</code>: chart a map of decision tickets, work them one at a time, compile the Solution Statement, hand off at the win.</li>
+          <li><code>deal-factor</code>: research the buying committee, criteria, competitors and risks. Findings are sourced.</li>
+          <li><code>business-proposal</code> and <code>pitch-deck</code>: drafted from the statement.</li>
+          <li><code>proof-of-concept</code>: the smallest working demo of the named proof requirements.</li>
+          <li><code>retro</code>: propose small changes to the pack after a finished deal.</li>
+        </ul>
+      </div>
+      <pre class="flow" aria-label="Pitch flow diagram">idea or discovery note
+  |
+  v
+problem-to-solution
+  |   <-- deal-factor
+  v
+Solution Statement
+  |--> business-proposal
+  |--> pitch-deck
+  v
+win --> hand-off --> plate</pre>
+    </div>
+    <p class="small">The Solution Statement is the only interface between the pitch skills. Pricing, timeline, team and terms in the proposal are left as human inputs, never derived.</p>
+  </div>
+</section>
+
+<section id="status">
+  <div class="wrap">
+    <h2>What is proven, and what is not</h2>
+    <p class="sub">Version 0.1.0. Built on three fictional fixtures, with no real project behind it yet.</p>
+    <div class="status">
+      <div class="proven">
+        <h3>Shown so far</h3>
+        <ul>
+          <li>451 tests passed on the day this page was written (2026-11-25), Windows 11, Python 3.13.</li>
+          <li>Three fixtures (<code>acme-linkr</code>, <code>acme-csv</code>, <code>acme-freight</code>) each go from skeleton to red on every AC, a reference build, green, reviewed, and done.</li>
+          <li>An independence check plants a blind spot that the builder's own tests miss, and the full run turns that AC red.</li>
+          <li>The agent and skill files are tested for structure: tool limits, line caps, and that every <code>gp</code> command they name exists.</li>
+        </ul>
+      </div>
+      <div class="open">
+        <h3>Not shown yet</h3>
+        <ul>
+          <li>A real project. One small real tool, chosen by the owner, has to pass before this is called proven.</li>
+          <li>A live end-to-end run of the workers. The tests check structure, not how a model behaves on the files.</li>
+          <li>Whether a hidden business rule surfaces before the build when a simulated sponsor answers questions, run three times.</li>
+          <li>The container runner on a machine with a runtime, the <code>browser</code> driver, and mobile, desktop or embedded surfaces.</li>
+          <li>The hook in a live Claude Code session, and the <code>unattended</code> ladder level, which is specified but not built.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="try">
+  <div class="wrap">
+    <h2>Try it</h2>
+    <p class="sub">The engine runs on its own, with no Claude Code needed.</p>
+<pre class="cmd">python bin/gp init my-project
+python bin/gp doctor
+python -m pytest -q</pre>
+    <p class="small">On Windows, use <code>bin\gp.cmd</code>. It needs Python 3.10 or newer, PyYAML and git. Tested only on Windows 11 with Python 3.13 and git 2.55; Python 3.10 to 3.12, Linux and macOS are untested.</p>
+    <p class="small">As a Claude Code plugin, the repository root is also a local marketplace. Add it with <code>/plugin marketplace add &lt;path to this folder&gt;</code>, then <code>/plugin install greenfield-pipeline@greenfield-pipeline-local</code>. This path has not been tried in a live session.</p>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><a href="https://github.com/herjunoha/greenfield-pipeline">github.com/herjunoha/greenfield-pipeline</a>. Apache-2.0. Copyright 2026 Herjuno Hestu Adhimarta.</p>
+    <p>The red-first loop, tracer bullets and vertical slices follow public test-driven-development practice (Kent Beck; Andy Hunt and Dave Thomas). Worked examples as the source of expected values follow specification by example (Gojko Adzic). The <code>pitch</code> plugin is adapted from Matt Pocock's <code>wayfinder</code> skill. No text from those works is reproduced.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  document.documentElement.classList.remove("no-js");
+  var buttons = document.querySelectorAll(".state");
+  var panels = document.querySelectorAll(".state-panel");
+  function show(name) {
+    buttons.forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.state === name ? "true" : "false"); });
+    panels.forEach(function (p) { p.classList.toggle("on", p.dataset.panel === name); });
+  }
+  buttons.forEach(function (b) { b.addEventListener("click", function () { show(b.dataset.state); }); });
+  show("done");
+})();
+</script>
+</body>
+</html>
