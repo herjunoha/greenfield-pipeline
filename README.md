@@ -1,7 +1,8 @@
 # greenfield-pipeline
 
-A company-agnostic plugin that delivers software from literal scratch. Design: `plan-delivery-plugin-agnostic.md`
-(kept outside this repo).
+A company-agnostic plugin for Claude Code that delivers software from literal scratch: requirements, test suites written
+and reviewed before the build, a staged build, a verified run and a handover pack, driven by the `gp` command line and a
+set of worker agents.
 
 **License: Apache-2.0.** Copyright 2026 Herjuno Hestu Adhimarta, Quality Assurance. See `LICENSE`.
 
